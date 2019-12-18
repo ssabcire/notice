@@ -1,11 +1,17 @@
 package main
 
 import (
+	"cloud.google.com/go/datastore"
+	"context"
 	"github.com/PuerkitoBio/goquery"
 	"log"
 	"os"
 	"regexp"
 )
+
+type Entity struct {
+	Aaa string
+}
 
 func mustGetenv(k string) string {
 	v := os.Getenv(k)
@@ -27,6 +33,34 @@ func line_scraping() (title string, err error) {
 	re := regexp.MustCompile(`\s+`)
 	title = re.ReplaceAllString(title, `\s`)
 	return title, nil
+}
+
+func dsGet(kind string, name string) (string, error) {
+	ctx := context.Background()
+	dsClient, err := datastore.NewClient(ctx, mustGetenv("GOOGLE_CLOUD_PROJECT"))
+	if err != nil {
+		return "", err
+	}
+	k := datastore.NameKey(kind, name, nil)
+	e := new(Entity)
+	if err := dsClient.Get(ctx, k, e); err != nil {
+		return "", err
+	}
+	return e.Aaa, nil
+}
+
+func dsPut(kind string, name string, s string) error {
+	ctx := context.Background()
+	dsClient, err := datastore.NewClient(ctx, mustGetenv("GOOGLE_CLOUD_PROJECT"))
+	if err != nil {
+		return err
+	}
+	k := datastore.NameKey(kind, name, nil)
+	e := &Entity{Aaa: s}
+	if _, err := dsClient.Put(ctx, k, e); err != nil {
+		return err
+	}
+	return nil
 }
 
 // func fb_scraping() (title string, err error) {

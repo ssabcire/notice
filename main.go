@@ -1,16 +1,10 @@
 package main
 
 import (
-	"cloud.google.com/go/datastore"
-	"context"
 	"log"
 	"net/http"
 	"os"
 )
-
-type Entity struct {
-	Aaa string
-}
 
 func main() {
 	http.HandleFunc("/datastore", dsHandler)
@@ -23,30 +17,25 @@ func main() {
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Print("error to ListenAndServe.", err)
 	}
-	log.Print("ok!")
 }
 
 func dsHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	dsClient, err := datastore.NewClient(ctx, mustGetenv("GOOGLE_CLOUD_PROJECT"))
+	kind := "Task"
+	name := "a"
+	dsText, err := dsGet(kind, name)
 	if err != nil {
-		log.Print("new client err. ", err)
-		os.Exit(1)
-	}
-	k := datastore.NameKey("Task", "a", nil)
-	e := new(Entity)
-	if err := dsClient.Get(ctx, k, e); err != nil {
-		log.Print("dsClient error. ", err)
-		os.Exit(1)
-	}
-	e.Aaa, err = scraping()
-	if err != nil || e.Aaa == "" {
 		log.Print(err)
-		e.Aaa = "scraping sippai"
 	}
-	if _, err := dsClient.Put(ctx, k, e); err != nil {
-		log.Print("dsClient.Put error. ", err)
+	scText, err := line_scraping()
+	if err != nil || scText == "" {
+		log.Print(err)
 		os.Exit(1)
 	}
-	log.Print("Send to message.")
+	if scText != dsText {
+		err := dsPut(kind, name, scText)
+		if err != nil {
+			log.Print(err)
+		}
+		log.Print("Send to message.")
+	}
 }
