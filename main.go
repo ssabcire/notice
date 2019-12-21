@@ -17,6 +17,7 @@ func main() {
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Print("error to ListenAndServe.", err)
 	}
+	log.Printf("サーバーを起動しました")
 }
 
 func dsHandler(w http.ResponseWriter, r *http.Request) {
@@ -24,17 +25,16 @@ func dsHandler(w http.ResponseWriter, r *http.Request) {
 	name := "a"
 	dsText, err := dsGet(kind, name)
 	if err != nil {
-		log.Print(err)
+		log.Print("Error to dsGet. ", err)
 	}
 	scText, err := line_scraping()
 	if err != nil || scText == "" {
-		log.Print(err)
-		os.Exit(1)
+		log.Print("Error to line_scraping. ", err)
 	}
 	if scText != dsText {
 		err := dsPut(kind, name, scText)
 		if err != nil {
-			log.Print(err)
+			log.Print("Error to Datastore Put. ", err)
 		}
 		log.Print("Send to message.")
 	}
