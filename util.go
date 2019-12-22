@@ -2,17 +2,21 @@ package main
 
 import (
 	"cloud.google.com/go/datastore"
+	"cloud.google.com/go/pubsub"
 	"context"
 	"github.com/PuerkitoBio/goquery"
 	"log"
 	"os"
 	"regexp"
+	"sync"
 )
 
+// Datastoreのエンティティ
 type Entity struct {
 	Aaa string
 }
 
+// 環境変数取得
 func mustGetenv(k string) string {
 	v := os.Getenv(k)
 	if v == "" {
@@ -21,6 +25,7 @@ func mustGetenv(k string) string {
 	return v
 }
 
+// LINEサイトのスクレイピング
 func line_scraping() (title string, err error) {
 	scraping_url := mustGetenv("LINE_URL")
 	doc, err := goquery.NewDocument(scraping_url)
@@ -35,7 +40,7 @@ func line_scraping() (title string, err error) {
 	return title, nil
 }
 
-
+// Datastoreの前処理
 func initialize() (ctx context.Context, client *datastore.Client, err error) {
 	ctx = context.Background()
 	client, err = datastore.NewClient(ctx, mustGetenv("GOOGLE_CLOUD_PROJECT"))
@@ -45,6 +50,7 @@ func initialize() (ctx context.Context, client *datastore.Client, err error) {
 	return ctx, client, nil
 }
 
+// Datastoreからデータを取得
 func dsGet(kind string, name string) (string, error) {
 	ctx, client, err := initialize()
 	if err != nil {
@@ -58,6 +64,7 @@ func dsGet(kind string, name string) (string, error) {
 	return e.Aaa, nil
 }
 
+// Datastoreに引数sを保存
 func dsPut(kind string, name string, s string) error {
 	ctx, client, err := initialize()
 	if err != nil {
@@ -71,6 +78,31 @@ func dsPut(kind string, name string, s string) error {
 	return nil
 }
 
+// PubSub用
+var messagesMu sync.Mutex
+
+// TopicにPublishする
+func send(message string, topicName string) error {
+	ctx := context.Background()
+	client, err := pubsub.NewClient(ctx, mustGetenv("GOOGLE_CLOUD_PROJECT"))
+	if err != nil {
+		return err
+	}
+	topic := client.Topic(mustGetenv(topicName))
+	exists, err := topic.Exists(ctx)
+	if err != nil || !exists {
+		return err
+	}
+	msg := &pubsub.Message{
+		Data: []byte(message),
+	}
+	messagesMu.Lock()
+	defer messagesMu.Unlock()
+	if _, err := topic.Publish(ctx, msg).Get(ctx); err != nil {
+		return err
+	}
+	return nil
+}
 
 // func fb_scraping() (title string, err error) {
 // 	scraping_url := mustGetenv("SCRAPING_URL")

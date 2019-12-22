@@ -26,16 +26,24 @@ func dsHandler(w http.ResponseWriter, r *http.Request) {
 	dsText, err := dsGet(kind, name)
 	if err != nil {
 		log.Print("Error to dsGet. ", err)
+		return
 	}
 	scText, err := line_scraping()
 	if err != nil || scText == "" {
 		log.Print("Error to line_scraping. ", err)
+		return
 	}
 	if scText != dsText {
 		err := dsPut(kind, name, scText)
 		if err != nil {
 			log.Print("Error to Datastore Put. ", err)
+			return
 		}
-		log.Print("Send to message.")
+		err = send(scText, mustGetenv("LINE_TOPIC"))
+		if err != nil {
+			log.Print("Error to send. ", err)
+			return
+		}
 	}
+	log.Print("Send to message.")
 }
