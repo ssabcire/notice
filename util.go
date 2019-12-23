@@ -88,7 +88,7 @@ func send(message string, topicName string) error {
 	if err != nil {
 		return err
 	}
-	topic := client.Topic(mustGetenv(topicName))
+	topic := client.Topic(topicName)
 	exists, err := topic.Exists(ctx)
 	if err != nil || !exists {
 		return err

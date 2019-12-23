@@ -44,6 +44,6 @@ func dsHandler(w http.ResponseWriter, r *http.Request) {
 			log.Print("Error to send. ", err)
 			return
 		}
+		log.Print("Send to message.")
 	}
-	log.Print("Send to message.")
 }
