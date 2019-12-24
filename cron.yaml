@@ -1,4 +1,4 @@
 cron:
     - description: Push a "publish" onto pubsub every minutes
-      url: /datastore
+      url: /slack/line
       schedule: every 10 minutes

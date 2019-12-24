@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	http.HandleFunc("/datastore", dsHandler)
+	http.HandleFunc("/slack/line", lineHandler)
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -20,9 +20,9 @@ func main() {
 	log.Printf("サーバーを起動しました")
 }
 
-func dsHandler(w http.ResponseWriter, r *http.Request) {
-	kind := "Task"
-	name := "a"
+func lineHandler(w http.ResponseWriter, r *http.Request) {
+	kind := "Slack"
+	name := "Line"
 	dsText, err := dsGet(kind, name)
 	if err != nil {
 		log.Print("Error to dsGet. ", err)
