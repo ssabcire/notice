@@ -1,0 +1,4 @@
+cron:
+    - description: Push a "publish" onto pubsub every minutes
+      url: /datastore
+      schedule: every 10 minutes
